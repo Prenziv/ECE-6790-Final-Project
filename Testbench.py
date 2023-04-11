@@ -49,29 +49,36 @@ def testR():
 
 #Shows noisy response of neuron
 def testNoise():
-   t = np.arange(0,2,.2)
-   
-   network = gn.GridNetworkNoisy(5,5)
-   network.accumulatedNoise = 0
+    
+    network = gn.GridNetworkNoisy(5,5)
+    network.generateNoise(25)
 
-   x = np.linspace(0,2*5,1000)
-   y = network.r(x,3,0,.2)
-   plt.ion()
-   figure, ax = plt.subplots(figsize=(10, 8))
-   line1, = ax.plot(x, y)
-   line2, = ax.plot(x,y)
+    x = np.linspace(0,2*5,1000)
+    y = []
+    for i in range(network.M):
+            y.append(network.r(x,i,0))
 
-   for i in range(10):
-       newY = network.r(x,3,t[i],.2)
+    plt.ion()
+    figure, ax = plt.subplots(figsize=(10, 8))
 
-       line1.set_xdata(x)
-       line1.set_ydata(newY)
+    lines = []
+    for i in range(network.M):
+            lines.append(ax.plot(x,y[i],'r'))
+    
+    lines2 = []
+    for i in range(network.M):
+            lines2.append(ax.plot(x,y[i],'b'))
 
-       figure.canvas.draw()
+    for i in range(50):
+        for j in range(network.M):
+            lines[j][0].set_xdata(x)
+            lines[j][0].set_ydata(network.r(x,j,i))
+        
 
-       figure.canvas.flush_events()
+        figure.canvas.draw()
+        figure.canvas.flush_events()
 
-       time.sleep(1)
+        time.sleep(.5)
 
 
 testNoise()

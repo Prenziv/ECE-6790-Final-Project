@@ -11,21 +11,25 @@ class GridNetworkNoisy:
         self.M = neuronNumber
         self.l = spatialPeriod
         self.s = .11
-        self.accumulatedNoise = 0
+        self.Noise = []
+
+    def generateNoise(self,numSteps):
+        self.Noise = np.zeros(numSteps)
+        Inoise = 0
+        for i in range(numSteps-1):
+            Rnoise = np.random.normal(0,.04,1)
+            Inoise = Inoise + np.random.normal(0,.04,1)
+            self.Noise[i+1] = Rnoise+Inoise
         
-    #Returns the phase response of the network for some location x
-    #over some time t
-    #Make sure length(t) == length(x) 
-    def phi(self,x,t,deltat):
+    #Returns the phase response of the network for all x at time step t
+    def phi(self,x,tstep):
         ideal =  x/self.l
-        Rnoise = np.random.normal(0,.04,1)
-        Inoise = self.accumulatedNoise + np.random.normal(0,.04,1)
-        return np.mod(ideal+Rnoise+Inoise,1)
+        return np.mod(ideal+self.Noise[tstep],1)
     
     #Returns the neural tuning curve of one neuron in the network for some distance x
-    def r(self,x,neuronNum,t,deltat):
+    def r(self,x,neuronNum,tstep):
         phiPref = self.getPreferredPhase(neuronNum)
-        a = self.phi(x,t,deltat) - phiPref
+        a = self.phi(x,tstep) - phiPref
         b = np.minimum(np.abs(a),1-np.abs(a))
         return np.exp(-np.square(b)/(2*np.square(self.s)))
 
