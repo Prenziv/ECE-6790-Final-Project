@@ -52,6 +52,8 @@ def testNoise():
    t = np.arange(0,2,.2)
    
    network = gn.GridNetworkNoisy(5,5)
+   network.accumulatedNoise = 0
+
    x = np.linspace(0,2*5,1000)
    y = network.r(x,3,0,.2)
    plt.ion()
