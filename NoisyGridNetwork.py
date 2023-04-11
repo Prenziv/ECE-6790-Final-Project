@@ -6,19 +6,21 @@ import numpy as np
 #   M - Number of neurons in the network
 #   l - Spatial period (lambda)
 # s is the phase width (sigma) of the neural tuning curve, held constant to match paper
+# s_n is standard deviation of noise
 class GridNetworkNoisy:
     def __init__(self,neuronNumber,spatialPeriod):
         self.M = neuronNumber
         self.l = spatialPeriod
         self.s = .11
         self.Noise = []
+        self.s_n = .04
 
     def generateNoise(self,numSteps):
         self.Noise = np.zeros(numSteps)
         Inoise = 0
         for i in range(numSteps-1):
-            Rnoise = np.random.normal(0,.04,1)
-            Inoise = Inoise + np.random.normal(0,.04,1)
+            Rnoise = np.random.normal(0,self.s_n,1)
+            Inoise = Inoise + np.random.normal(0,self.s_n,1)
             self.Noise[i+1] = Rnoise+Inoise
         
     #Returns the phase response of the network for all x at time step t
