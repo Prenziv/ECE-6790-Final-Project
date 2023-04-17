@@ -40,3 +40,12 @@ class GridNetworkNoisy:
     def getPreferredPhase(self,neuronNum):
         preferredPhases = np.linspace(0,self.l,self.M)/self.l
         return preferredPhases[neuronNum]
+    
+    def phi_error_free(self,x):
+        return np.mod(x/self.l,1)
+    
+    def r_error_free(self,x,neuronNum):
+        phiPref = self.getPreferredPhase(neuronNum)
+        a = self.phi_error_free(x) - phiPref
+        b = np.minimum(np.abs(a),1-np.abs(a))
+        return np.exp(-np.square(b)/(2*np.square(self.s)))

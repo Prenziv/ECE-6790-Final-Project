@@ -2,9 +2,9 @@
 import BasicGridCell as g
 import NoisyGridNetwork as gn
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import time
+import ReadoutCell as ro
 
 #Shows phi response of grid cell network over two periods
 def testPhi(m,l):
@@ -23,8 +23,8 @@ def testPhi(m,l):
 
 #Shows neural tuning curve responses of two networks of neurons
 def testR():
-    neuron1 = g.GridNetworkNoiseless(5,4)
-    neuron2 = g.GridNetworkNoiseless(5,4)
+    neuron1 = g.GridNetworkNoiseless(8,4)
+    neuron2 = g.GridNetworkNoiseless(4,4)
 
     l1 = neuron1.l
     m1 = neuron1.M
@@ -54,7 +54,7 @@ def testNoise():
     network.generateNoise(25)
 
     x = np.linspace(0,2*5,1000)
-    y = []
+    y = [] # neural tuning curve of one neuron in the network for some distance x
     for i in range(network.M):
             y.append(network.r(x,i,0))
 
@@ -69,7 +69,7 @@ def testNoise():
     for i in range(network.M):
             lines2.append(ax.plot(x,y[i],'b'))
 
-    for i in range(50):
+    for i in range(25):
         for j in range(network.M):
             lines[j][0].set_xdata(x)
             lines[j][0].set_ydata(network.r(x,j,i))
@@ -78,7 +78,40 @@ def testNoise():
         figure.canvas.draw()
         figure.canvas.flush_events()
 
-        time.sleep(.5)
+        time.sleep(2)
 
 
-testNoise()
+def testReadout():
+    M=2 # networkNum=2
+    N=4
+    # grid cell networks init
+    gridNets=[]
+    for i in range(M):
+        network=gn.GridNetworkNoisy(N,10)
+        network.generateNoise(40)
+        gridNets.append(network)
+    # readout cell init
+    readout= ro.ReadoutCell(M,N)
+    # start prediction
+    h=np.zeros(readout.R) # prediction
+    h0=np.zeros(readout.R) # true readout
+    # with noisy and error correction
+    plt.subplot(211)
+    for i in range(readout.R): 
+        h[i]=readout.summedInputstoReadout(i,gridNets,4)
+    plt.plot(range(readout.R),h)
+    # error free
+    plt.subplot(212)
+    for i in range(readout.R): 
+        h0[i]=readout.summedInputstoReadout_error_free(i,gridNets)
+    plt.plot(range(readout.R),h0)
+    plt.show()
+    print("The winner readout is",readout.Readout(h))
+    print("The true readout is",readout.Readout(h0))
+    
+    
+    
+
+# testNoise()
+# testR()
+testReadout()
