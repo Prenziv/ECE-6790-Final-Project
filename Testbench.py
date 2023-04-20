@@ -82,9 +82,9 @@ def testNoise():
 
 
 def testReadout():
-    M=3 # networkNum=2
-    N=5 # neuron num
-    test_t=50 # The instantaneous time we predict
+    M=2 # networkNum=2
+    N=4 # neuron num
+    test_t=5 # The instantaneous time we predict
     # grid cell networks init
     gridNets=[]
     for i in range(M):
