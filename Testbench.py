@@ -82,32 +82,33 @@ def testNoise():
 
 
 def testReadout():
-    M=2 # networkNum=2
-    N=4
+    M=3 # networkNum=2
+    N=5 # neuron num
+    test_t=50 # The instantaneous time we predict
     # grid cell networks init
     gridNets=[]
     for i in range(M):
-        network=gn.GridNetworkNoisy(N,10)
-        network.generateNoise(40)
+        network=gn.GridNetworkNoisy(N,N)
+        network.generateNoise(100)
         gridNets.append(network)
     # readout cell init
     readout= ro.ReadoutCell(M,N)
     # start prediction
-    h=np.zeros(readout.R) # prediction
-    h0=np.zeros(readout.R) # true readout
+    h=np.zeros(readout.R) # prediction init
+    h0=np.zeros(readout.R) # true readout init
     # with noisy and error correction
     plt.subplot(211)
     for i in range(readout.R): 
-        h[i]=readout.summedInputstoReadout(i,gridNets,4)
+        h[i]=readout.summedInputstoReadout(i,gridNets,test_t) # readout prediction from gridcell networks
     plt.plot(range(readout.R),h)
     # error free
     plt.subplot(212)
     for i in range(readout.R): 
-        h0[i]=readout.summedInputstoReadout_error_free(i,gridNets)
+        h0[i]=readout.summedInputstoReadout_error_free(i,gridNets,test_t)
     plt.plot(range(readout.R),h0)
     plt.show()
-    print("The winner readout is",readout.Readout(h))
-    print("The true readout is",readout.Readout(h0))
+    print("The winner readout cell is",readout.Readout(h))
+    print("The true readout cell is",readout.Readout(h0))
     
     
     

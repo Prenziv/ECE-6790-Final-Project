@@ -14,6 +14,7 @@ class ReadoutCell:
         #For finding Guassian curve to evaluate Weights
         self.mean = np.mean(self.readoutPreferred)
         self.sigmah = .06 #Not sure the value is correct 
+        
 
 
     #Returns the value of the G function at location x with mean and variance sigma^2.
@@ -30,7 +31,10 @@ class ReadoutCell:
     #Returns the correct activity pattern of the grid cells for a location x
     def gridcellTermforWeights(self,x,neuronNum,networkNum,gridNets,t):
         # Use alpha term for knowing which network the neuron is in when building larger network
-        return gridNets[networkNum].r_error_free(x,neuronNum)
+        if gridNets[networkNum].r_error_free(x,neuronNum)==1:
+            return 1
+        else:
+            return 0
 
     # Returns the Weights for Inference
     def Weights(self,readoutNum,networkNum,neuronNum,gridNets,t=0):
@@ -43,8 +47,8 @@ class ReadoutCell:
     #Returns an element of summed input to the readout cell
     def summedInputstoReadout(self,readoutNum,gridNets,t=0):
         hi=0
-        for a in range(self.N):
-            for j in range(self.M):
+        for j in range(self.M):
+            for a in range(self.N):
                 hi += self.Weights(readoutNum,a,j,gridNets,t)*gridNets[a].r(self.readoutPreferred[readoutNum],j,t)
         return hi
 
@@ -55,9 +59,9 @@ class ReadoutCell:
         return np.argmax(h)
     #Eventually by having the winner readout cell, the preferred location of it is our current location!
     
-    def summedInputstoReadout_error_free(self,readoutNum,gridNets):
+    def summedInputstoReadout_error_free(self,readoutNum,gridNets,t):
         hi=0
         for a in range(self.N):
             for j in range(self.M):
-                hi += gridNets[a].r_error_free(self.readoutPreferred[readoutNum],j)
+                hi += self.Weights(readoutNum,a,j,gridNets,t)*gridNets[a].r_error_free(self.readoutPreferred[readoutNum],j)
         return hi
