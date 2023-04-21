@@ -168,10 +168,10 @@ def testGridCells():
 def testRead():
     N = 4 #Number of networks
     M = 5 #Number of neurons in a network
-    Rl = 4 #Distance max
+    Rl = 1 #Distance max
     R = 40 #Number of readout cells
 
-    x = 1 #Location
+    x = 0.5 #Location
 
     readout = cn.CellNetworkwithReadout(N,M,Rl,R)
 
@@ -181,7 +181,7 @@ def testRead():
     # with noisy and error correction
     plt.subplot(211)
     for i in range(readout.R): 
-        h[i]=readout.summedInputstoReadout(i,x,20) # readout prediction from gridcell networks
+        h[i]=readout.summedInputstoReadout(i,x,40) # readout prediction from gridcell networks
     plt.plot(range(readout.R),h)
     # error free
     plt.subplot(212)

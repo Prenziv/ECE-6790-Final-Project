@@ -40,12 +40,20 @@ class CellNetworkwithReadout:
                         W[i][a][j] += self.readoutTermforWeights(x,i)*self.gridNets[a].r_error_free(x,j)
         return W
 
+    #def summedInputstoReadout(self,i,x,t):
+        #hi=0
+        #for a in range(self.N):
+            #for j in range(self.M):
+                #hi += self.W[i][a][j]*self.gridNets[a].r(x,j,t)
+        #return hi
+
     def summedInputstoReadout(self,i,x,t):
         hi=0
+        temp=0
         for a in range(self.N):
             for j in range(self.M):
-                hi += self.W[i][a][j]*self.gridNets[a].r(x,j,t)
-        return hi
+                hi += self.W[i][a][j]*((self.gridNets[a].r(x,j,t)+self.errorCorrectiontoGridcell(a, j, x)))
+        return (hi/200)    
 
     def summedInputstoReadout_error_free(self,i,x):
         hi=0
@@ -58,3 +66,10 @@ class CellNetworkwithReadout:
     #h contains all the inputs to the readout cell (h=hi where i=0:R)
     def Readout(self,h):
         return np.argmax(h)
+
+    
+    def errorCorrectiontoGridcell(self,a,j,x):
+        g=0
+        for i in range(self.R):
+            g +=self.W[i][a][j]*self.readoutTermforWeights(x,i)
+        return g
