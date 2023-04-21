@@ -7,8 +7,8 @@ class ReadoutCell:
         # self.R  = neuron.M*neuron.N*5 #No of ReadoutCells
         self.N=N # network num
         self.M=M # neuron num per network
-        self.R  = M*N*5 #No of ReadoutCells
-        self.Rl = self.R/10  #Measure of location representation in meters
+        self.R  = 100 #No of ReadoutCells
+        self.Rl = 4  #Measure of location representation in meters
         self.readoutPreferred = np.linspace(0, self.Rl, self.R) #Preferred Location of the Readout cell
 
         #For finding Guassian curve to evaluate Weights
@@ -20,15 +20,14 @@ class ReadoutCell:
 
 
     #Returns the value of the G function at location x with mean and variance sigma^2.
-    def G(self,x,readoutNum):    
-        return 1 / (self.sigmah * np.sqrt(2 * np.pi)) * np.exp(-(x - (readoutNum/10))**2 / (2 * self.sigmah**2))
+    def G(self,x):    
+        return (1/(self.sigmah * np.sqrt(2 * np.pi))) * np.exp(-np.square(x)/(2*np.square(self.sigmah)))
+    
 
 
     #Returns the locally peaked response of the readout cells for a location x
     def readoutTermforWeights(self,x,i):
-        #ri = self.G(x,i)*np.abs(x-self.readoutPreferred[i-1])
-        ri = self.G(np.abs(x-self.readoutPreferred[i-1]),i)
-        print(ri)
+        ri = self.G(np.abs(x-self.readoutPreferred[i-1]))
         return ri
 
 
