@@ -15,6 +15,11 @@ class GridNetworkNoisy:
         self.Noise = []
         self.s_n = .04
 
+        #self.preferredPhase = np.zeros(self.M)
+        #for i in range(self.M):
+        #    self.preferredPhase[i] = self.getPreferredPhase(i)
+        
+
     def generateNoise(self,numSteps):
         self.Noise = np.zeros(numSteps)
         Inoise = 0
@@ -38,7 +43,9 @@ class GridNetworkNoisy:
     #Returns the preferred phase of neuron i 
     #Assume evenly distributed over spatial period
     def getPreferredPhase(self,neuronNum):
-        preferredPhases = np.linspace(0,self.l,self.M)/self.l
+        stepSize = 1/(self.M+1)
+        preferredPhases = np.arange(0,1,stepSize)
+        preferredPhases = preferredPhases[1:self.M+1]
         return preferredPhases[neuronNum]
     
     def phi_error_free(self,x):

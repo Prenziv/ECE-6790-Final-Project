@@ -1,23 +1,26 @@
 import numpy as np
 import NoisyGridNetwork as gn
 
-class CellNetworkwithReadout:
-    def __init__(self,N,M,Rl,R):
+class FullGridNetworkwithReadout:
+    def __init__(self,N,M,Rl,R,lvalues):
         self.R = R # Number of readout cells
         self.Rl = Rl # Distance
-        self.readoutPreferred = np.linspace(0, self.Rl, self.R) #Preferred Location of the Readout cell
+        #self.readoutPreferred = np.linspace(0, self.Rl, self.R) #Preferred Location of the Readout cell
+        stepSize = self.Rl/(self.R+1)
+        self.readoutPreferred = np.arange(0,Rl,stepSize)
+        self.readoutPreferred = self.readoutPreferred[1:self.R+1]
 
         # grid cell networks init
         self.gridNets = []
         for i in range(N):
-            network=gn.GridNetworkNoisy(M,Rl/(i+1))
+            network=gn.GridNetworkNoisy(M,lvalues[i])
             network.generateNoise(100)
             self.gridNets.append(network)
 
         self.M = M # Number of neurons per network
         self.N = N # Number of networks
 
-        self.sigmah = 0.6 #Constant for G variance
+        self.sigmah = 0.06 #Constant for G variance
 
         self.W = self.Weights()
     
@@ -28,7 +31,7 @@ class CellNetworkwithReadout:
     
     #Returns the locally peaked response of the readout cells for a location x
     def readoutTermforWeights(self,x,i):
-        ri = self.G(np.abs(x-self.readoutPreferred[i-1]))
+        ri = self.G(np.abs(x-self.readoutPreferred[i]))
         return ri
     
     def Weights(self):
@@ -36,16 +39,9 @@ class CellNetworkwithReadout:
         for i in range(self.R):
             for a in range(self.N):
                 for j in range(self.M):
-                    for x in np.linspace(0,self.Rl,100):
+                    for x in np.linspace(0,self.Rl,500):
                         W[i][a][j] += self.readoutTermforWeights(x,i)*self.gridNets[a].r_error_free(x,j)
         return W
-
-    #def summedInputstoReadout(self,i,x,t):
-        #hi=0
-        #for a in range(self.N):
-            #for j in range(self.M):
-                #hi += self.W[i][a][j]*self.gridNets[a].r(x,j,t)
-        #return hi
 
     def summedInputstoReadout(self,i,x,t):
         hi=0

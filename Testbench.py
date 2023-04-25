@@ -1,180 +1,165 @@
 #Testbench
-import BasicGridCell as g
 import NoisyGridNetwork as gn
 import numpy as np
 import matplotlib.pyplot as plt
-import time
-import ReadoutCell as ro
-import CellNetwork as cn
+import FullGridNetworkwithReadout as cn
 
+#Removes discontinuities when plotting to avoid sharp lines
+def removeDiscontinuity(x,y):
+    for i in range(len(y)):
+        if np.abs(y[i] - y[i-1]) > .5:
+            y = np.insert(y,i,np.nan)
+            x = np.insert(x,i,np.nan)
+    
+    return x,y
 
-#Shows phi response of grid cell network over two periods
-def testPhi(m, l):
-    neuron = g.GridNetworkNoiseless(m, l)
-    l = neuron.l
+#Finds the nearest value in the array to the given value
+def find_nearest(array, values):
+    indices = np.abs(np.subtract.outer(array, values)).argmin(0)
+    return indices
 
-    x = np.linspace(0, 2 * l, 100)
-    phaseResponse = neuron.phi(x)
+#Plots 
+# - Phase of network over some spatial periods and 3 time steps
+# - Neural tuning curve of one neuron over 3 spatial periods and 3 time steps
+# Uses noisy neuron case
+def gridCellPlot(network,numPeriods):
+    #Generate noise for 10 time steps
+    network.generateNoise(10)
 
-    plt.plot(x[0:50], phaseResponse[0:50])
-    plt.plot(x[50:99], phaseResponse[50:99], color='tab:blue')
-    plt.text(0, .7, '$\lambda = $' + str(l))
-    plt.xlabel('Location')
-    plt.ylabel('Spatial Phase')
-    plt.show()
+    numPoints = 250*numPeriods
 
-
-#Shows neural tuning curve responses of two networks of neurons
-def testR():
-    neuron1 = g.GridNetworkNoiseless(8, 4)
-    neuron2 = g.GridNetworkNoiseless(4, 4)
-
-    l1 = neuron1.l
-    m1 = neuron1.M
-
-    l2 = neuron2.l
-    m2 = neuron2.M
-
-    x = np.linspace(0, 2 * l2, 1000)
+    x = np.linspace(0,numPeriods*network.l,numPoints)
 
     plt.figure()
     plt.subplot(211)
-    for i in range(m1):
-        responses = neuron1.r(x, i)
-        plt.plot(x, responses)
+    phaseResponse = network.phi_error_free(x)
+    [xnew,ynew] = removeDiscontinuity(x,phaseResponse)
+    plt.plot(xnew,ynew,linewidth=2,color='black')
+
+    phaseResponse = network.phi(x,3)
+    [xnew,ynew] = removeDiscontinuity(x,phaseResponse)
+    plt.plot(xnew,ynew,linewidth=2,color='tab:blue')
+
+    phaseResponse = network.phi(x,9)
+    [xnew,ynew] = removeDiscontinuity(x,phaseResponse)
+    plt.plot(xnew,ynew,linewidth=2,color='tab:red')
+
+    plt.yticks([0,1])
+    plt.ylim([0,1])
+    plt.xlim([0,numPeriods*l])
+    plt.tick_params(bottom = False,labelbottom=False)
 
     plt.subplot(212)
-    for i in range(m2):
-        responses = neuron2.r(x, i)
-        plt.plot(x, responses)
+    r = network.r_error_free(x,int(M/2))
+    plt.plot(x,r,linewidth=2,color='black')
 
+    r = network.r(x,int(M/2),3)
+    plt.plot(x,r,linewidth=2,color='tab:blue')
+
+    r = network.r(x,int(M/2),9)
+    plt.plot(x,r,linewidth=2,color='tab:red')
+
+    plt.yticks([0,1])
+    plt.ylim([0,1])
+    plt.xlim([0,numPeriods*l])
+    plt.tick_params(bottom = False,labelbottom=False)
     plt.show()
 
+#Plots neural tuning curve response of all neurons over two spatial periods
+#for two full grid cell networks of the same size with different spatial periods
+#in their individual networks
+def plotR(N,M,lvalues1,lvalues2):    
+    numPoints = 1000
 
-#Shows noisy response of neuron
-def testNoise():
+    maxPoint = max([lvalues1+lvalues2])
+    maxPoint = maxPoint[0]
 
-    network = gn.GridNetworkNoisy(5, 5)
-    network.generateNoise(25)
-
-    x = np.linspace(0, 2 * 5, 1000)
-    y = [
-    ]  # neural tuning curve of one neuron in the network for some distance x
-    for i in range(network.M):
-        y.append(network.r(x, i, 0))
-
-    plt.ion()
-    figure, ax = plt.subplots(figsize=(10, 8))
-
-    lines = []
-    for i in range(network.M):
-        lines.append(ax.plot(x, y[i], 'r'))
-
-    lines2 = []
-    for i in range(network.M):
-        lines2.append(ax.plot(x, y[i], 'b'))
-
-    for i in range(25):
-        for j in range(network.M):
-            lines[j][0].set_xdata(x)
-            lines[j][0].set_ydata(network.r(x, j, i))
-
-        figure.canvas.draw()
-        figure.canvas.flush_events()
-
-        time.sleep(2)
-
-
-def testReadout():
-    M=4 # networkNum=2
-    N=6 # neuron num
-    test_t=1 # The instantaneous time we predict
-    X=2
-    # grid cell networks init
-    gridNets = []
-    for i in range(M):
-        network=gn.GridNetworkNoisy(N,(i+1)*1)
-        network.generateNoise(100)
-        gridNets.append(network)
-    # readout cell init
-    readout = ro.ReadoutCell(M, N,gridNets)
-    # start prediction
-    h=np.zeros(readout.R) # prediction init
-    h0=np.zeros(readout.R) # true readout init
-    # with noisy and error correction
+    #Network 1
     plt.subplot(211)
-    for i in range(readout.R): 
-        h[i]=readout.summedInputstoReadout(i,gridNets,X,test_t) # readout prediction from gridcell networks
-    plt.plot(range(readout.R),h)
-    # error free
-    plt.subplot(212)
-    for i in range(readout.R): 
-        h0[i]=readout.summedInputstoReadout_error_free(i,gridNets,X)
-    plt.plot(range(readout.R),h0)
-    plt.show()
-    print("The winner readout cell is",readout.Readout(h))
-    print("The true readout cell is",readout.Readout(h0))
-    
-def testG():
-    M=2 # networkNum=2
-    N=4 # neuron num
-    test_t=1 # The instantaneous time we predict
-    # grid cell networks init
+    lvalues = lvalues1
     gridNets = []
-    for i in range(M):
-        network=gn.GridNetworkNoisy(N,(i+1)*1)
-        network.generateNoise(100)
+    for i in range(N):
+        network=gn.GridNetworkNoisy(M,lvalues[i])
         gridNets.append(network)
-    # readout cell init
-    readout = ro.ReadoutCell(M, N,gridNets)
 
-    x = np.linspace(0,4,40)
-    y = np.zeros(40)
+    x = np.linspace(0,maxPoint,numPoints)
+
+    colors = ['tab:blue','tab:green','tab:red','tab:orange']
+
+    for i in range(network.M):
+        for j in range(len(gridNets)):
+            responses = gridNets[j].r_error_free(x, i)
+            plt.plot(x, responses,color=colors[j])
+
+    plt.yticks([0,1])
+    plt.ylim([0,1])
+    plt.xlim([0,maxPoint])
+    plt.tick_params(bottom = False,labelbottom=False)
+
+    #Network 2
+    plt.subplot(212)
+    lvalues = lvalues2
+    gridNets = []
+    for i in range(N):
+        network=gn.GridNetworkNoisy(M,lvalues[i])
+        gridNets.append(network)
+
+    for i in range(network.M):
+        for j in range(len(gridNets)):
+            responses = gridNets[j].r_error_free(x, i)
+            plt.plot(x, responses,color=colors[j])
+
+    plt.yticks([0,1])
+    plt.ylim([0,1])
+    plt.xlim([0,maxPoint])
+    plt.tick_params(bottom = False,labelbottom=False)
+
+    plt.show()
+
+#Plots tuning curves for readout cells over distance
+def testG(readout):
+    x = np.linspace(0,readout.Rl,1000)
+    y = np.zeros(1000)
     
-    i = 0
-    for location in x:
-        y[i] = readout.readoutTermforWeights(location,20)
-        i = i+1
+    for j in range(readout.R):
+        i = 0
+        for location in x:
+            y[i] = readout.readoutTermforWeights(location,j)
+            i = i+1
+        plt.plot(x,y)
     
 
     plt.plot(x,y)
     plt.show()
 
 
-def testGridCells():
-    N=2 # networkNum=2
-    M=4 # neuron num
-    test_t=1 # The instantaneous time we predict
-    # grid cell networks init
-    gridNets = []
-    for i in range(N):
-        network=gn.GridNetworkNoisy(M,(i+1)*1)
-        network.generateNoise(100)
-        gridNets.append(network)
+#Plots the error in coded distance for ideal response (no noise)
+#over Rl for some time step
+def plotErrorLambda(readout):
+    preferredPhases = readout.readoutPreferred
 
-    
-    X = 1.5
-    y = np.zeros(N*M)
-    i=0
-    for j in range(M):
-        for a in range(N):
-            y[i] =  gridNets[a].r_error_free(X,j)
-            i = i+1
+    x = np.arange(.1,4,.1)
+    err = np.zeros(len(x))
+    k = 0
+    for i in x:
+        h0=np.zeros(readout.R)
+        trueans = find_nearest(preferredPhases,i)
+        for j in range(readout.R): 
+            h0[j]=readout.summedInputstoReadout_error_free(j,i)
+        
+        ans = readout.Readout(h0)
 
-    plt.plot(y)
+        if ans != trueans:
+            err[k] = np.abs(ans-trueans)
+        k = k+1
+        
+    plt.plot(x,err,color='tab:blue')
     plt.show()
     
 
-def testRead():
-    N = 4 #Number of networks
-    M = 5 #Number of neurons in a network
-    Rl = 1 #Distance max
-    R = 40 #Number of readout cells
-
-    x = 0.5 #Location
-
-    readout = cn.CellNetworkwithReadout(N,M,Rl,R)
-
+#Plots readout cells, ideal and error corrected
+#For some input location x
+def testReadout(readout,x):
     # start prediction
     h=np.zeros(readout.R) # prediction init
     h0=np.zeros(readout.R) # true readout init
@@ -194,10 +179,25 @@ def testRead():
     print("The true readout cell is",readout.Readout(h0))
 
 
-# testNoise()
-# testR()
-#testReadout()
-#testG()
-#testGridCells()
 
-testRead()
+M = 6
+l = 1
+network = gn.GridNetworkNoisy(M, l)
+
+#gridCellPlot(network,4)
+
+#plotR(4,8,[.3,.36,.45,.51],[.8,.6,.4,.2])
+
+N = 4 #Number of networks
+M = 8 #Number of neurons in a network
+Rl = 4 #Distance max
+R = 40 #Number of readout cells
+lvalues = [.3,.36,.45,.51]
+fullNetwork = cn.FullGridNetworkwithReadout(N,M,Rl,R,lvalues)
+
+#testG(fullNetwork)
+#plotErrorLambda(fullNetwork)
+testReadout(fullNetwork,1)
+
+
+
